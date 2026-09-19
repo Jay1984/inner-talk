@@ -32,19 +32,24 @@ function PreparingRitual() {
 function Arrival({ onComplete }) {
   const breath = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+  const rippleOne = useRef(new Animated.Value(0)).current;
+  const rippleTwo = useRef(new Animated.Value(0)).current;
+  const rippleThree = useRef(new Animated.Value(0)).current;
   const [phase, setPhase] = useState('Breathe in');
   useEffect(() => {
-    const animation = Animated.sequence([Animated.timing(breath, { toValue: 1, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.delay(800), Animated.timing(breath, { toValue: 0, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]);
-    const hold = setTimeout(() => setPhase('Hold gently'), 1600);
-    const release = setTimeout(() => setPhase('Let it go'), 2400);
+    const animation = Animated.sequence([Animated.timing(breath, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.delay(1200), Animated.timing(breath, { toValue: 0, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]);
+    const ripple = value => Animated.loop(Animated.sequence([Animated.timing(value, { toValue: 1, duration: 2400, easing: Easing.out(Easing.quad), useNativeDriver: true }), Animated.timing(value, { toValue: 0, duration: 0, useNativeDriver: true })]));
+    const firstRipple = ripple(rippleOne); const secondRipple = ripple(rippleTwo); const thirdRipple = ripple(rippleThree);
+    const hold = setTimeout(() => setPhase('Hold gently'), 2200);
+    const release = setTimeout(() => setPhase('Let it go'), 3400);
+    firstRipple.start(); const secondStart = setTimeout(() => secondRipple.start(), 800); const thirdStart = setTimeout(() => thirdRipple.start(), 1600);
     animation.start(({ finished }) => { if (finished) Animated.timing(opacity, { toValue: 0, duration: 260, useNativeDriver: true }).start(onComplete); });
-    return () => { clearTimeout(hold); clearTimeout(release); animation.stop(); };
-  }, [breath, opacity, onComplete]);
-  const scale = breath.interpolate({ inputRange: [0, 1], outputRange: [0.84, 1.14] });
-  const ringScale = breath.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.36] });
-  const ringOpacity = breath.interpolate({ inputRange: [0, 1], outputRange: [0.12, 0.48] });
+    return () => { clearTimeout(hold); clearTimeout(release); clearTimeout(secondStart); clearTimeout(thirdStart); animation.stop(); firstRipple.stop(); secondRipple.stop(); thirdRipple.stop(); };
+  }, [breath, opacity, onComplete, rippleOne, rippleTwo, rippleThree]);
+  const scale = breath.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.16] });
+  const rippleStyle = value => ({ opacity: value.interpolate({ inputRange: [0, 0.62, 1], outputRange: [0, 0.34, 0] }), transform: [{ scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.66, 1.62] }) }] });
   const activeStep = phase === 'Breathe in' ? 0 : phase === 'Hold gently' ? 1 : 2;
-  return <SafeAreaView style={styles.arrival}><StatusBar barStyle="dark-content" /><Animated.View style={[styles.arrivalInner, { opacity }]}><View style={styles.arrivalTop}><Text style={styles.brandLight}>INNER TALK</Text><Pressable onPress={() => { opacity.stopAnimation(); onComplete(); }} hitSlop={12}><Text style={styles.skip}>Skip</Text></Pressable></View><View style={styles.arrivalCentre}><Animated.View style={[styles.arrivalPulseOuter, { opacity: ringOpacity, transform: [{ scale: ringScale }] }]} /><Animated.View style={[styles.arrivalPulseInner, { opacity: ringOpacity, transform: [{ scale: ringScale }] }]} /><Animated.View style={{ transform: [{ scale }] }}><BodyArt type="breath" color={palette.ochre} /></Animated.View></View><View style={styles.arrivalBottom}><Text style={styles.arrivalPhase}>{phase}</Text><Text style={styles.arrivalHint}>Follow the shape. There is nowhere else to be.</Text><View style={styles.arrivalSteps}>{[0, 1, 2, 3].map(step => <View key={step} style={[styles.arrivalStep, step === activeStep && styles.arrivalStepActive]} />)}</View></View></Animated.View></SafeAreaView>;
+  return <SafeAreaView style={styles.arrival}><StatusBar barStyle="dark-content" /><Animated.View style={[styles.arrivalInner, { opacity }]}><View style={styles.arrivalTop}><Text style={styles.brandLight}>INNER TALK</Text><Pressable onPress={() => { opacity.stopAnimation(); onComplete(); }} hitSlop={12}><Text style={styles.skip}>Skip</Text></Pressable></View><View style={styles.arrivalCentre}><Animated.View style={[styles.arrivalPulseOuter, rippleStyle(rippleOne)]} /><Animated.View style={[styles.arrivalPulseOuter, rippleStyle(rippleTwo)]} /><Animated.View style={[styles.arrivalPulseOuter, rippleStyle(rippleThree)]} /><Animated.View style={{ transform: [{ scale }] }}><BodyArt type="breath" color={palette.ochre} /></Animated.View></View><View style={styles.arrivalBottom}><Text style={styles.arrivalPhase}>{phase}</Text><Text style={styles.arrivalHint}>Follow the shape. There is nowhere else to be.</Text><View style={styles.arrivalSteps}>{[0, 1, 2, 3].map(step => <View key={step} style={[styles.arrivalStep, step === activeStep && styles.arrivalStepActive]} />)}</View></View></Animated.View></SafeAreaView>;
 }
 function Doodle({ variant = 'flower' }) { return <Text style={styles.doodle}>{variant === 'flower' ? '✦' : '⌁'}</Text>; }
 function Choice({ label, selected, onPress, color = palette.peach }) { return <Pressable onPress={onPress} style={[styles.choice, selected && { backgroundColor: color, borderColor: palette.ink }]}><Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{label}</Text><Text style={styles.choiceArrow}>↗</Text></Pressable>; }
