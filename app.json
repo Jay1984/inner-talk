@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Inner Talk",
+    "slug": "inner-talk",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ca.innertalk.prototype"
+    }
+  }
+}
